@@ -123,3 +123,21 @@ export async function refresh(req, res) {
     });
   }
 }
+
+// Logout the user by clearing the refresh token from the database and the cookie
+export async function logout(req, res) {
+  const { userId } = req.user;
+
+  await userModel.findByIdAndUpdate(userId, {
+    refreshToken: null,
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: config.NODE_ENV === "production",
+  });
+
+  return res.status(200).json({
+    message: "User logged out successfully",
+  });
+}
