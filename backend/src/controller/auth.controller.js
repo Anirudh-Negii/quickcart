@@ -1,6 +1,6 @@
 import userModel from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import { createAccessToken, createRefreshToken } from "../utils/auth.util.js";
+import { createAccessToken, createRefreshToken, readRefreshToken } from "../utils/auth.util.js";
 import config from "../config/config.js";
 
 // Register a new user
@@ -75,4 +75,51 @@ export async function login(req, res) {
       accessToken,
     },
   });
+}
+
+// Refresh the access token using the refresh token after the access token has expired
+export async function refresh(req, res) {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      message: "Refresh token not found",
+    });
+  }
+
+  try {
+    const decoded = readRefreshToken(refreshToken);
+    const { userId } = decoded;
+
+    const user = await userModel.findById(userId);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        message: "Invalid refresh token",
+      });
+    }
+
+    const accessToken = createAccessToken({ userId: user._id });
+    const newRefreshToken = createRefreshToken({ userId: user._id });
+
+    await userModel.findByIdAndUpdate(user._id, {
+      refreshToken: newRefreshToken,
+    });
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+    });
+
+    return res.status(200).json({
+      message: "Token refreshed successfully",
+      data: {
+        accessToken,
+      },
+    });
+  } catch (error) {
+    return res.status(401).json({
+      message: "Invalid refresh token",
+    });
+  }
 }
