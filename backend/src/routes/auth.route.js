@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { registerValidator, loginValidator } from "../validators/auth.validator.js";
-import { register, login, refresh, logout } from "../controller/auth.controller.js";
+import { register, login, refresh, logout, getMe } from "../controller/auth.controller.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -16,5 +16,8 @@ router.post("/refresh-token", refresh);
 
 // @POST /api/auth/logout
 router.post("/logout", authenticate, logout);
+
+// @GET /api/auth/me
+router.get("/me", authenticate, getMe);
 
 export default router;

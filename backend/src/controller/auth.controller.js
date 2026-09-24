@@ -141,3 +141,26 @@ export async function logout(req, res) {
     message: "User logged out successfully",
   });
 }
+
+// Get the currently logged-in user's information
+export async function getMe(req, res) {
+  const { userId } = req.user;
+  const user = await userModel.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  return res.status(200).json({
+    message: "User fetched successfully",
+    data: {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    },
+  });
+}
