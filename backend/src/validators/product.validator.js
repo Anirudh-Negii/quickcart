@@ -1,4 +1,5 @@
 import { body, validationResult } from "express-validator";
+import { param } from "express-validator";
 
 export const createProductValidator = [
   body("name")
@@ -27,6 +28,25 @@ export const createProductValidator = [
     .isString().withMessage("Image must be a String").bail()
     .trim()
     .isURL().withMessage("Image must be a valid URL"),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: "Invalid Request",
+        errors: errors.array(),
+      });
+    }
+
+    next();
+  },
+];
+
+export const productIdValidator = [
+  param("id")
+    .exists().withMessage("Product ID is required").bail()
+    .isMongoId().withMessage("Invalid product ID"),
 
   (req, res, next) => {
     const errors = validationResult(req);

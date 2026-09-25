@@ -31,3 +31,23 @@ export async function getProducts(req, res) {
     },
   });
 }
+
+// Get a single product by ID
+export async function getProductById(req, res) {
+  const { id } = req.params;
+
+  const product = await productModel.findById(id);
+
+  if (!product) {
+    return res.status(404).json({
+      message: "Product not found",
+    });
+  }
+
+  return res.status(200).json({
+    message: "Product fetched successfully",
+    data: {
+      product,
+    },
+  });
+}
