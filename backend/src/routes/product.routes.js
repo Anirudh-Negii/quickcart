@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../middlewares/auth.middleware.js";
-import { createProductValidator, productIdValidator } from "../validators/product.validator.js";
-import { createProduct, getProducts, getProductById } from "../controller/product.controller.js";
+import { createProductValidator, productIdValidator, updateProductValidator } from "../validators/product.validator.js";
+import { createProduct, getProducts, getProductById, updateProduct } from "../controller/product.controller.js";
 
 const router = Router();
 
@@ -13,5 +13,8 @@ router.get("/", getProducts);
 
 // @GET /api/products/:id
 router.get("/:id", productIdValidator, getProductById);
+
+// @PUT /api/products/:id
+router.put("/:id", authenticate, productIdValidator, updateProductValidator, updateProduct);
 
 export default router;
