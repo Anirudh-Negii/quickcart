@@ -7,7 +7,10 @@ function Navbar() {
     `cursor-pointer transition-colors ${
       isActive ? "text-orange-500" : "text-gray-300 hover:text-orange-500"
     }`;
-  const firstName = user.name.split(" ")[0].charAt(0).toUpperCase() + user.name.split(" ")[0].slice(1).toLowerCase();
+  const firstName = user
+    ? user.name.split(" ")[0].charAt(0).toUpperCase() +
+      user.name.split(" ")[0].slice(1).toLowerCase()
+    : "";
 
   return (
     <nav className="border-b border-neutral-800 bg-[#242424]">
