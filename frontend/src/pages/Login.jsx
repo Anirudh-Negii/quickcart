@@ -3,24 +3,23 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 function Login() {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState("");
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
   const { setUser } = useAuth();
 
   async function onSubmit(data) {
-    setServerError("");
-
     try {
       const response = await api.post("/auth/login", data);
       const { accessToken, user } = response.data.data;
       localStorage.setItem("accessToken", accessToken);
       setUser(user);
+      toast.success("Logged in successfully");
       navigate("/");
     } catch (error) {
-      setServerError(error.response?.data?.message || "Login failed");
+      toast.error(error.response?.data?.message || "Login failed");
     }
   }
 
@@ -86,12 +85,6 @@ function Login() {
               )}
             </div>
           </div>
-
-          {serverError && (
-            <p className="mt-5 text-center text-sm text-red-400">
-              {serverError}
-            </p>
-          )}
 
           <button
             type="submit"

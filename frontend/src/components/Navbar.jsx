@@ -1,16 +1,43 @@
 import { NavLink } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
+import toast from "react-hot-toast";
 
 function Navbar() {
-  const { user, loading } = useAuth();
+  const { user, setUser, loading } = useAuth();
+
   const navLinkClass = ({ isActive }) =>
     `cursor-pointer transition-colors ${
       isActive ? "text-orange-500" : "text-gray-300 hover:text-orange-500"
     }`;
+
   const firstName = user
     ? user.name.split(" ")[0].charAt(0).toUpperCase() +
       user.name.split(" ")[0].slice(1).toLowerCase()
     : "";
+
+  async function handleLogout() {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+
+      await api.post(
+        "/auth/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      localStorage.removeItem("accessToken");
+      setUser(null);
+
+      toast.success("Logged out successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to logout");
+    }
+  }
 
   return (
     <nav className="border-b border-neutral-800 bg-[#242424]">
@@ -29,7 +56,16 @@ function Navbar() {
 
           {!loading &&
             (user ? (
-              <span className="font-medium text-white">{firstName}</span>
+              <>
+                <span className="font-medium text-white">{firstName}</span>
+
+                <button
+                  onClick={handleLogout}
+                  className="cursor-pointer text-gray-300 transition-colors hover:text-orange-500"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <>
                 <NavLink to="/login" className={navLinkClass}>

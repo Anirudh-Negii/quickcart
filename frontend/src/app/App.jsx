@@ -8,10 +8,27 @@ import ProductDetails from "../pages/ProductDetails";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PublicRoute from "../components/PublicRoute";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <BrowserRouter>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: "#242424",
+            color: "#fff",
+            border: "1px solid #404040",
+          },
+          success: {
+            iconTheme: {
+              primary: "#f97316",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
       <Navbar />
 
       <Routes>

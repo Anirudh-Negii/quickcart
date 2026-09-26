@@ -2,10 +2,10 @@ import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import api from "../api/axios";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 function Register() {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState("");
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
   const password = watch("password");
 
@@ -14,9 +14,10 @@ function Register() {
 
     try {
       await api.post("/auth/register", data);
+      toast.success("User registered successfully! Please login.");
       navigate("/login");
     } catch (error) {
-      setServerError(error.response?.data?.message || "Registration failed");
+      toast.error(error.response?.data?.message || "Login failed");
     }
   }
 
@@ -142,12 +143,6 @@ function Register() {
               )}
             </div>
           </div>
-
-          {serverError && (
-            <p className="mt-5 text-center text-sm text-red-400">
-              {serverError}
-            </p>
-          )}
 
           <button
             type="submit"
