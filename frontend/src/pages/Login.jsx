@@ -2,19 +2,22 @@ import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
+  const { setUser } = useAuth();
 
   async function onSubmit(data) {
     setServerError("");
 
     try {
       const response = await api.post("/auth/login", data);
-      const { accessToken } = response.data.data;
+      const { accessToken, user } = response.data.data;
       localStorage.setItem("accessToken", accessToken);
+      setUser(user);
       navigate("/");
     } catch (error) {
       setServerError(error.response?.data?.message || "Login failed");
