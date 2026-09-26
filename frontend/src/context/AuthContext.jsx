@@ -16,11 +16,7 @@ function AuthProvider({ children }) {
         return;
       }
 
-      const response = await api.get("/auth/me", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await api.get("/auth/me");
 
       setUser(response.data.data.user);
     } catch (error) {

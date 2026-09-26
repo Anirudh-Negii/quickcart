@@ -18,17 +18,7 @@ function Navbar() {
 
   async function handleLogout() {
     try {
-      const accessToken = localStorage.getItem("accessToken");
-
-      await api.post(
-        "/auth/logout",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+      await api.post("/auth/logout");
 
       localStorage.removeItem("accessToken");
       setUser(null);
