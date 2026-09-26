@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { ClockLoader } from "react-spinners";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +13,9 @@ function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [deletingProduct, setDeletingProduct] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const {
     register,
@@ -67,32 +70,112 @@ function Products() {
     return uploadData.url;
   }
 
+  function openAddProduct() {
+    setEditingProduct(null);
+    reset({
+      name: "",
+      description: "",
+      price: "",
+      stock: "",
+      image: null,
+    });
+    setShowAddProduct(true);
+  }
+
+  function closeProductModal() {
+    setShowAddProduct(false);
+    setEditingProduct(null);
+
+    reset({
+      name: "",
+      description: "",
+      price: "",
+      stock: "",
+      image: null,
+    });
+  }
+
+  function openEditProduct(product) {
+    setShowAddProduct(false);
+    setEditingProduct(product);
+
+    reset({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+    });
+  }
+
   async function onSubmit(data) {
     try {
       const imageFile = data.image?.[0];
 
-      if (!imageFile) {
-        toast.error("Please select an image");
-        return;
+      if (editingProduct) {
+        let imageUrl = editingProduct.image;
+
+        if (imageFile) {
+          imageUrl = await uploadImage(imageFile);
+        }
+
+        await api.put(`/products/${editingProduct._id}`, {
+          name: data.name,
+          description: data.description,
+          price: Number(data.price),
+          stock: Number(data.stock),
+          image: imageUrl,
+        });
+
+        toast.success("Product updated successfully");
+      } else {
+        if (!imageFile) {
+          toast.error("Please select an image");
+          return;
+        }
+
+        const imageUrl = await uploadImage(imageFile);
+
+        await api.post("/products", {
+          name: data.name,
+          description: data.description,
+          price: Number(data.price),
+          stock: Number(data.stock),
+          image: imageUrl,
+        });
+
+        toast.success("Product created successfully");
       }
 
-      const imageUrl = await uploadImage(imageFile);
-
-      await api.post("/products", {
-        name: data.name,
-        description: data.description,
-        price: Number(data.price),
-        stock: Number(data.stock),
-        image: imageUrl,
-      });
-
-      toast.success("Product created successfully");
-
-      reset();
-      setShowAddProduct(false);
+      closeProductModal();
       fetchProducts();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create product");
+      toast.error(
+        error.response?.data?.message ||
+          (editingProduct
+            ? "Failed to update product"
+            : "Failed to create product"),
+      );
+    }
+  }
+
+  async function handleDelete() {
+    if (!deletingProduct) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+
+      await api.delete(`/products/${deletingProduct._id}`);
+
+      toast.success("Product deleted successfully");
+
+      setDeletingProduct(null);
+      fetchProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete product");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -122,7 +205,7 @@ function Products() {
 
             {user && (
               <button
-                onClick={() => setShowAddProduct(true)}
+                onClick={openAddProduct}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-500 px-5 py-3 font-medium text-white transition-colors hover:bg-orange-600"
               >
                 <Plus className="h-5 w-5" />
@@ -138,54 +221,76 @@ function Products() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {products.map((product) => (
-                <Link
+                <div
                   key={product._id}
-                  to={`/products/${product._id}`}
-                  className="cursor-pointer overflow-hidden rounded-xl border border-neutral-800 bg-[#242424] transition-transform hover:-translate-y-1"
+                  className="overflow-hidden rounded-xl border border-neutral-800 bg-[#242424] transition-transform hover:-translate-y-1"
                 >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-56 w-full object-cover"
-                  />
+                  <Link
+                    to={`/products/${product._id}`}
+                    className="block cursor-pointer"
+                  >
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-56 w-full object-cover"
+                    />
 
-                  <div className="p-5">
-                    <h2 className="mb-2 text-xl font-semibold text-white">
-                      {product.name}
-                    </h2>
+                    <div className="p-5 pb-3">
+                      <h2 className="mb-2 text-xl font-semibold text-white">
+                        {product.name}
+                      </h2>
 
-                    <p className="mb-4 line-clamp-2 text-sm leading-6 text-gray-400">
-                      {product.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <p className="text-lg font-bold text-orange-500">
-                        ₹ {product.price.toLocaleString("en-IN")}
+                      <p className="mb-4 line-clamp-2 text-sm leading-6 text-gray-400">
+                        {product.description}
                       </p>
 
-                      <p className="text-sm text-gray-500">
-                        Stock: {product.stock}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-lg font-bold text-orange-500">
+                          ₹ {product.price.toLocaleString("en-IN")}
+                        </p>
+
+                        <p className="text-sm text-gray-500">
+                          Stock: {product.stock}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+
+                  {user && (
+                    <div className="flex gap-3 px-5 pb-5">
+                      <button
+                        onClick={() => openEditProduct(product)}
+                        className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-700 px-4 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:border-orange-500 hover:text-orange-500"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => setDeletingProduct(product)}
+                        className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-700 px-4 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:border-red-500 hover:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
         </div>
       </main>
 
-      {showAddProduct && (
+      {/* Add / Edit Product Modal */}
+      {(showAddProduct || editingProduct) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-6 py-10">
           <div className="relative w-full max-w-lg rounded-2xl border border-neutral-800 bg-[#242424] p-8">
             <button
               type="button"
-              onClick={() => {
-                setShowAddProduct(false);
-                reset();
-              }}
+              onClick={closeProductModal}
               className="absolute right-4 top-4 cursor-pointer text-gray-400 transition-colors hover:text-white"
-              aria-label="Close add product modal"
+              aria-label="Close product modal"
             >
               <X className="h-5 w-5" />
             </button>
@@ -195,7 +300,9 @@ function Products() {
                 Products
               </p>
 
-              <h2 className="text-2xl font-bold text-white">Add Product</h2>
+              <h2 className="text-2xl font-bold text-white">
+                {editingProduct ? "Edit Product" : "Add Product"}
+              </h2>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -299,16 +406,27 @@ function Products() {
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-300">
                   Product Image
+                  {editingProduct && (
+                    <span className="ml-2 text-xs text-gray-500">Optional</span>
+                  )}
                 </label>
 
                 <input
                   type="file"
                   accept="image/*"
                   {...register("image", {
-                    required: "Product image is required",
+                    required: editingProduct
+                      ? false
+                      : "Product image is required",
                   })}
                   className="w-full cursor-pointer rounded-lg border border-neutral-700 bg-[#1c1c1c] px-4 py-3 text-sm text-gray-400 file:mr-4 file:cursor-pointer file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-orange-600"
                 />
+
+                {editingProduct && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Leave empty to keep the current image.
+                  </p>
+                )}
 
                 {errors.image && (
                   <p className="mt-1 text-sm text-red-400">
@@ -322,9 +440,69 @@ function Products() {
                 disabled={isSubmitting}
                 className="w-full cursor-pointer rounded-lg bg-orange-500 px-5 py-3 font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? "Creating Product..." : "Create Product"}
+                {isSubmitting
+                  ? editingProduct
+                    ? "Updating Product..."
+                    : "Creating Product..."
+                  : editingProduct
+                    ? "Update Product"
+                    : "Create Product"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
+          <div className="relative w-full max-w-md rounded-2xl border border-neutral-800 bg-[#242424] p-8">
+            <button
+              type="button"
+              onClick={() => setDeletingProduct(null)}
+              className="absolute right-4 top-4 cursor-pointer text-gray-400 transition-colors hover:text-white"
+              aria-label="Close delete modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-6">
+              <p className="mb-2 text-sm font-medium uppercase tracking-widest text-red-400">
+                Delete Product
+              </p>
+
+              <h2 className="text-2xl font-bold text-white">
+                Delete this product?
+              </h2>
+
+              <p className="mt-3 leading-6 text-gray-400">
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-white">
+                  {deletingProduct.name}
+                </span>
+                ? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingProduct(null)}
+                disabled={deleting}
+                className="flex-1 cursor-pointer rounded-lg border border-neutral-700 px-5 py-3 font-medium text-gray-300 transition-colors hover:border-neutral-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 cursor-pointer rounded-lg bg-red-500 px-5 py-3 font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}
