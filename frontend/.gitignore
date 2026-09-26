@@ -54,3 +54,6 @@ temp/
 
 # Local development
 *.local
+
+# Images of products
+images/

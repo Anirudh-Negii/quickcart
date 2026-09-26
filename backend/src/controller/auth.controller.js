@@ -62,6 +62,7 @@ export async function login(req, res) {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: config.NODE_ENV === "production",
+    sameSite: config.NODE_ENV === "production" ? "none" : "lax",
   });
 
   return res.status(200).json({
@@ -109,6 +110,7 @@ export async function refresh(req, res) {
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
     });
 
     return res.status(200).json({
@@ -135,6 +137,7 @@ export async function logout(req, res) {
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: config.NODE_ENV === "production",
+    sameSite: config.NODE_ENV === "production" ? "none" : "lax",
   });
 
   return res.status(200).json({
