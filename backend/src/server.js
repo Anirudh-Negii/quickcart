@@ -5,6 +5,6 @@ import { connectDB } from "./config/db.js";
 await connectDB();
 
 const PORT = config.PORT;
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running on port ${PORT}`);
 });
