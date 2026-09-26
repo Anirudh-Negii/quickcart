@@ -38,6 +38,8 @@ api.interceptors.response.use(
 
     if (
       error.response?.status !== 401 ||
+      originalRequest.url === "/auth/login" ||
+      originalRequest.url === "/auth/register" ||
       originalRequest.url === "/auth/refresh-token" ||
       originalRequest._retry
     ) {

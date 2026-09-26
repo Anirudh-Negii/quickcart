@@ -10,8 +10,6 @@ function Register() {
   const password = watch("password");
 
   async function onSubmit(data) {
-    setServerError("");
-
     try {
       await api.post("/auth/register", data);
       toast.success("User registered successfully! Please login.");
