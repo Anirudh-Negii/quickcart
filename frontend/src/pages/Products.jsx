@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { ClockLoader } from "react-spinners";
+import { Link } from "react-router";
 
 function Products() {
   const [products, setProducts] = useState([]);
@@ -52,11 +53,12 @@ function Products() {
         {products.length === 0 ? (
           <p className="text-gray-400">No products available.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 cursor-pointer">
             {products.map((product) => (
-              <div
+              <Link
                 key={product._id}
-                className="overflow-hidden rounded-xl border border-neutral-800 bg-[#242424]"
+                to={`/products/${product._id}`}
+                className="cursor-pointer overflow-hidden rounded-xl border border-neutral-800 bg-[#242424] transition-transform hover:-translate-y-1"
               >
                 <img
                   src={product.image}
@@ -75,7 +77,7 @@ function Products() {
                     ₹ {product.price.toLocaleString("en-IN")}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -83,4 +85,5 @@ function Products() {
     </main>
   );
 }
+
 export default Products;
